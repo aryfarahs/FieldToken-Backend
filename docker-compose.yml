@@ -1,0 +1,29 @@
+version: '3.9'
+
+services:
+  bff:
+    build: ./bff
+    container_name: fieldtoken-bff
+    ports:
+      - "3001:3001"
+    env_file:
+      - ./bff/.env.prod
+    depends_on:
+      - microservico-usuario
+      - microservico-ativos
+
+  microservico-usuario:
+    build: ./microservico-usuario
+    container_name: fieldtoken-usuarios
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./microservico-usuario/.env.prod
+
+  microservico-ativos:
+    build: ./microservico-ativos
+    container_name: fieldtoken-ativos
+    ports:
+      - "3002:3002"
+    env_file:
+      - ./microservico-ativos/.env.prod
