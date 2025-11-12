@@ -2,18 +2,24 @@ import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { Ativo } from './entities/ativo.entity';
+import { ServiceBusPublisher } from 'src/messaging/service-bus.publisher';
 
 @Injectable()
 export class AtivoService {
   private baseUrl = process.env.ATIVOS_URL;
 
-  constructor(private readonly httpService: HttpService) {}
+  constructor(
+    private readonly httpService: HttpService,
+    private readonly bus: ServiceBusPublisher,
+  ) {}
 
-  async create(createAtivoDto: Partial<Ativo>): Promise<Ativo> {
-    const response = await firstValueFrom(
-      this.httpService.post(`${this.baseUrl}/ativo`, createAtivoDto),
+  async enqueueCreate(dto: any, correlationId?: string) {
+    await this.bus.publish(
+      process.env.ASB_QUEUE_ATIVO!,
+      'ativo.created',
+      dto,
+      correlationId,
     );
-    return response.data as Ativo;
   }
 
   async findAll(): Promise<Ativo[]> {

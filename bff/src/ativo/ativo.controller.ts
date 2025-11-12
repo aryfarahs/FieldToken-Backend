@@ -6,6 +6,8 @@ import {
   Param,
   Patch,
   Delete,
+  HttpCode,
+  Headers,
 } from '@nestjs/common';
 import { AtivoService } from './ativo.service';
 import { Ativo } from './entities/ativo.entity';
@@ -15,8 +17,10 @@ export class AtivoController {
   constructor(private readonly ativoService: AtivoService) {}
 
   @Post()
-  create(@Body() createAtivoDto: Partial<Ativo>) {
-    return this.ativoService.create(createAtivoDto);
+  @HttpCode(202)
+  async create(@Body() body: any, @Headers('x-correlation-id') corr?: string) {
+    await this.ativoService.enqueueCreate(body, corr);
+    return { status: 'accepted' };
   }
 
   @Get()
