@@ -6,6 +6,8 @@ import {
   Param,
   Put,
   Delete,
+  HttpCode,
+  Headers,
 } from '@nestjs/common';
 import { UsuarioService } from './usuario.service';
 import { Usuario } from './entities/usuario.entity';
@@ -15,8 +17,10 @@ export class UsuarioController {
   constructor(private readonly usuarioService: UsuarioService) {}
 
   @Post()
-  create(@Body() createUsuarioDto: Partial<Usuario>) {
-    return this.usuarioService.create(createUsuarioDto);
+  @HttpCode(202)
+  async create(@Body() body: any, @Headers('x-correlation-id') corr?: string) {
+    await this.usuarioService.enqueueCreate(body, corr);
+    return { status: 'accepted' };
   }
 
   @Get()

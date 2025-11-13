@@ -2,18 +2,24 @@ import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { Usuario } from './entities/usuario.entity';
+import { ServiceBusPublisher } from 'src/messaging/service-bus.publisher';
 
 @Injectable()
 export class UsuarioService {
   private baseUrl = process.env.USUARIOS_URL;
 
-  constructor(private readonly httpService: HttpService) {}
+  constructor(
+    private readonly httpService: HttpService,
+    private readonly bus: ServiceBusPublisher,
+  ) {}
 
-  async create(createUsuarioDto: Partial<Usuario>): Promise<Usuario> {
-    const response = await firstValueFrom(
-      this.httpService.post(`${this.baseUrl}/usuario`, createUsuarioDto),
+  async enqueueCreate(dto: any, correlationId?: string) {
+    await this.bus.publish(
+      process.env.ASB_QUEUE_USUARIO!,
+      'usuario.created',
+      dto,
+      correlationId,
     );
-    return response.data as Usuario;
   }
 
   async findAll(): Promise<Usuario[]> {
