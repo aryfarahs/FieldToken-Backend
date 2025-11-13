@@ -1,13 +1,10 @@
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
-import cookieParser from "cookie-parser";
 import { ValidationPipe, Logger } from "@nestjs/common";
+import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-
-  // Middleware
-  // app.use(cookieParser());
 
   // CORS
   const frontendUrl = process.env.FRONTEND_URL || "*";
@@ -16,22 +13,38 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Validação global de DTOs
+  // Pipes globais
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true, // remove propriedades não definidas no DTO
-      forbidNonWhitelisted: true, // lança erro se houver propriedades extras
-      transform: true, // transforma payloads para tipos definidos nos DTOs
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
     })
   );
 
-  // Porta
-  const port = process.env.PORT || 3000;
-  await app.listen(port);
+  // -------------------------
+  // 🚀 Swagger Configuration
+  // -------------------------
+  const config = new DocumentBuilder()
+    .setTitle("FieldToken BFF")
+    .setDescription(
+      "Swagger do Backend For Frontend (BFF) responsável por orquestrar usuários e ativos."
+    )
+    .setVersion("1.0.0")
+    .addTag("Usuario")
+    .addTag("Ativo")
+    .build();
 
-  // Log
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup("swagger", app, document);
+
+  // Porta (Azure Container Apps usa process.env.PORT)
+  const port = 3000;
+  await app.listen(port, "0.0.0.0");
+
   const logger = new Logger("Bootstrap");
-  logger.log(`🚀 API is running on http://localhost:${port}`);
+  logger.log(`🚀 API running on port ${port}`);
+  logger.log(`📘 Swagger: /swagger`);
   logger.log(`🌐 CORS allowed for: ${frontendUrl}`);
 }
 bootstrap();
